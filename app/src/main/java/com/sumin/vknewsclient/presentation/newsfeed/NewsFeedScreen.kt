@@ -1,0 +1,85 @@
+package com.sumin.vknewsclient.presentation.newsfeed
+
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.DismissDirection
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.SwipeToDismiss
+import androidx.compose.material.rememberDismissState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.sumin.vknewsclient.Post
+import com.sumin.vknewsclient.domain.model.FeedPost
+import com.sumin.vknewsclient.ui.theme.VKBlue
+
+@OptIn(ExperimentalMaterialApi::class, ExperimentalFoundationApi::class)
+@Composable
+fun NewsFeedScreen(onCommentsPressed: (FeedPost) -> Unit){
+    val viewModel: NewsFeedViewModel = viewModel()
+    val state = viewModel.newsFeedState.collectAsState(initial = NewsFeedScreenState.Initial)
+    val currentState = state.value
+
+    if (currentState is NewsFeedScreenState.Posts) {
+        val posts = currentState.posts
+        LazyColumn(
+            contentPadding = PaddingValues(10.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            items(posts, key = { it.id }) {
+                val dismissState = rememberDismissState()
+                if (dismissState.isDismissed(DismissDirection.EndToStart)) {
+                    viewModel.deletePost(it)
+                }
+                SwipeToDismiss(
+                    modifier = Modifier.animateItemPlacement(),
+                    state = dismissState,
+                    directions = setOf(DismissDirection.EndToStart),
+                    background = {}
+                ) {
+                    Post(
+                        it,
+                        { feedPost, _ -> viewModel.changeLikeStatus(feedPost)},
+                        { feedPost, _ -> onCommentsPressed(feedPost) }
+                    )
+                }
+            }
+            item {
+                if (currentState.isNextLoading){
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ){
+                        CircularProgressIndicator(
+                            color = VKBlue
+                        )
+                    }
+                } else{
+                    SideEffect {
+                        viewModel.loadNextNewsFeed()
+                    }
+                }
+            }
+        }
+    } else if (currentState is NewsFeedScreenState.Loading){
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ){
+            CircularProgressIndicator(
+                color = VKBlue
+            )
+        }
+    }
+}

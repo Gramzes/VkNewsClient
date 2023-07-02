@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">VkNewsClient</string>
+    <string name="post_text">Lorem Ipsum - это текст-\"рыба\", часто используемый в печати и вэб-дизайне. Lorem Ipsum является стандартной \"рыбой\" для текстов на латинице с начала XVI века.</string>
+    <string name="nav_item_home">Home</string>
+    <string name="nav_item_favorite">Favourite</string>
+    <string name="nav_item_profile">Profile</string>
+    <string name="log_in_button">Log In</string>
+    <string name="comments">Comments</string>
+    <integer name="com_vk_sdk_AppId">51687428</integer>
 </resources>
