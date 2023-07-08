@@ -6,14 +6,16 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.sumin.vknewsclient.data.repository.NewsFeedRepositoryImpl
 import com.sumin.vknewsclient.domain.model.FeedPost
+import com.sumin.vknewsclient.domain.repository.NewsFeedRepository
 import com.sumin.vknewsclient.domain.usecases.GetCommentsUseCase
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
+import javax.inject.Inject
 
-class CommentsViewModel(val feedPost: FeedPost, application: Application): AndroidViewModel(application) {
-
-    private val repository = NewsFeedRepositoryImpl(getApplication())
-    private val getCommentsUseCase = GetCommentsUseCase(repository)
+class CommentsViewModel @Inject constructor(
+    private val feedPost: FeedPost,
+    private val getCommentsUseCase: GetCommentsUseCase
+) : ViewModel() {
 
     val screenState = getCommentsUseCase(feedPost)
         .map {
@@ -21,12 +23,4 @@ class CommentsViewModel(val feedPost: FeedPost, application: Application): Andro
         }
         .onStart { emit(CommentsScreenState.Loading) }
 
-    class Factory(
-        private val feedPost: FeedPost,
-        private val application: Application
-        ): ViewModelProvider.Factory{
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return CommentsViewModel(feedPost, application) as T
-        }
-    }
 }

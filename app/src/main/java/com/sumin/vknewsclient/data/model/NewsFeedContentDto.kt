@@ -10,5 +10,5 @@ data class NewsFeedContentDto(
     @SerializedName("groups")
     val groups: List<GroupDto>,
     @SerializedName("next_from")
-    val nextStartKey: String
+    val nextStartKey: String?
 )

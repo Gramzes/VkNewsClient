@@ -24,6 +24,7 @@ import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,18 +37,32 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.sumin.vknewsclient.R
+import com.sumin.vknewsclient.application.component
+import com.sumin.vknewsclient.application.getComponent
 import com.sumin.vknewsclient.domain.model.Comment
 import com.sumin.vknewsclient.domain.model.FeedPost
+import com.sumin.vknewsclient.presentation.ViewModelFactory
 import com.sumin.vknewsclient.ui.theme.VKBlue
 
 @Composable
 fun CommentsScreen(feedPost: FeedPost, onBackPressed: () -> Unit){
-    val viewModel: CommentsViewModel =
-        viewModel(factory = CommentsViewModel.Factory(
-            feedPost,
-            LocalContext.current.applicationContext as Application)
-        )
+    val component = getComponent()
+        .getCommentScreenComponentFactory()
+        .create(feedPost)
+    val viewModelFactory = component.getViewModelFactory()
+    val viewModel: CommentsViewModel = viewModel(factory = viewModelFactory)
     val state = viewModel.screenState.collectAsState(CommentsScreenState.Initial)
+    CommentScreenContent(
+        state = state,
+        onBackPressed = onBackPressed
+    )
+}
+
+@Composable
+fun CommentScreenContent(
+    state: State<CommentsScreenState>,
+    onBackPressed: () -> Unit
+    ){
     val currentState = state.value
     Scaffold(topBar = {
         TopAppBar(
@@ -83,7 +98,6 @@ fun CommentsScreen(feedPost: FeedPost, onBackPressed: () -> Unit){
                 }
             }
         }
-
     }
 }
 

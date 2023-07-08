@@ -27,9 +27,11 @@ import com.sumin.vknewsclient.navigation.NavigationState
 import com.sumin.vknewsclient.navigation.rememberNavState
 import com.sumin.vknewsclient.presentation.comments.CommentsScreen
 import com.sumin.vknewsclient.presentation.newsfeed.NewsFeedScreen
+import com.sumin.vknewsclient.presentation.profile.ProfileScreen
+import com.sumin.vknewsclient.presentation.profile.SheetLayout
 
 @Composable
-fun MainScreen(){
+fun MainScreen() {
     val navState = rememberNavState()
     Scaffold(bottomBar = { BottomBar(navState) }) {
         Box(
@@ -54,7 +56,9 @@ fun MainScreen(){
                         }
                     ) },
                 favoriteScreenContent = { TextCounter(name = "Favorite") },
-                profileScreenContent = { TextCounter(name = "Profile") }
+                profileScreenContent = {
+                    ProfileScreen()
+                }
             )
         }
     }

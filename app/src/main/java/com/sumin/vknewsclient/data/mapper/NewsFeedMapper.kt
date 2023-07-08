@@ -12,8 +12,9 @@ import com.sumin.vknewsclient.domain.model.Views
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import javax.inject.Inject
 
-class NewsFeedMapper {
+class NewsFeedMapper @Inject constructor() {
 
     fun mapResponseToPosts(response: NewsFeedResponseDto): List<FeedPost>{
         val posts = response.response.posts

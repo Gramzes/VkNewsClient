@@ -4,5 +4,7 @@ import com.google.gson.annotations.SerializedName
 
 data class PhotoUrlDto(
     @SerializedName("url")
-    val url: String
+    val url: String,
+    @SerializedName("type")
+    val size: String
 )

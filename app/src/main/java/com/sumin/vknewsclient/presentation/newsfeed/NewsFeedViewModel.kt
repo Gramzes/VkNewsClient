@@ -2,6 +2,7 @@ package com.sumin.vknewsclient.presentation.newsfeed
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sumin.vknewsclient.data.repository.NewsFeedRepositoryImpl
 import com.sumin.vknewsclient.domain.model.FeedPost
@@ -17,14 +18,15 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class NewsFeedViewModel(application: Application): AndroidViewModel(application) {
-    private val repository = NewsFeedRepositoryImpl(getApplication())
+class NewsFeedViewModel @Inject constructor(
+    private val getNewsFeedUseCase: GetNewsFeedUseCase,
+    private val loadNextDataUseCase: LoadNextDataUseCase,
+    private val changeLikeStatusUseCase: ChangeLikeStatusUseCase,
+    private val ignoreItemUseCase: IgnoreItemUseCase
+): ViewModel() {
 
-    private val getNewsFeedUseCase = GetNewsFeedUseCase(repository)
-    private val loadNextDataUseCase = LoadNextDataUseCase(repository)
-    private val changeLikeStatusUseCase = ChangeLikeStatusUseCase(repository)
-    private val ignoreItemUseCase = IgnoreItemUseCase(repository)
 
     private val newsFeedStateFlow = getNewsFeedUseCase()
     private val loadNextDataEvents = MutableSharedFlow<Unit>(replay = 1)

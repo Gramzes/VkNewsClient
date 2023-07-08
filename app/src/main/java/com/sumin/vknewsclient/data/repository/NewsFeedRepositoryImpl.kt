@@ -1,9 +1,8 @@
 package com.sumin.vknewsclient.data.repository
 
-import android.app.Application
 import android.util.Log
 import com.sumin.vknewsclient.data.mapper.NewsFeedMapper
-import com.sumin.vknewsclient.data.network.ApiFactory
+import com.sumin.vknewsclient.data.network.ApiService
 import com.sumin.vknewsclient.domain.model.AuthState
 import com.sumin.vknewsclient.domain.model.FeedPost
 import com.sumin.vknewsclient.domain.model.Like
@@ -20,12 +19,16 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.retry
 import kotlinx.coroutines.flow.stateIn
+import javax.inject.Inject
 
-class NewsFeedRepositoryImpl(application: Application): NewsFeedRepository {
-    private val storage = VKPreferencesKeyValueStorage(application)
+class NewsFeedRepositoryImpl @Inject constructor(
+    private val storage: VKPreferencesKeyValueStorage,
+    private val mapper: NewsFeedMapper,
+    private val vkService: ApiService
+): NewsFeedRepository {
+
     private val token: VKAccessToken?
         get() = VKAccessToken.restore(storage)
-    private val mapper = NewsFeedMapper()
     private var isFirstLoading = true
     private var nextFromKey: String? = null
     private var _feedPosts = mutableListOf<FeedPost>()
@@ -45,7 +48,7 @@ class NewsFeedRepositoryImpl(application: Application): NewsFeedRepository {
                 return@collect
             }
             val accessToken = getAccessToken()
-            val response = ApiFactory.vkService.loadNewsFeed(accessToken, nextFromKey)
+            val response = vkService.loadNewsFeed(accessToken, nextFromKey)
             nextFromKey = response.response.nextStartKey
             isFirstLoading = false
             _feedPosts += mapper.mapResponseToPosts(response).toMutableList()
@@ -83,11 +86,9 @@ class NewsFeedRepositoryImpl(application: Application): NewsFeedRepository {
     override suspend fun changeLikeStatus(feedPost: FeedPost){
         val accessToken = getAccessToken()
         val response = if (feedPost.statistics.likes.isLiked){
-            ApiFactory.vkService
-                .deleteLike(accessToken, feedPost.ownerId, feedPost.id)
+            vkService.deleteLike(accessToken, feedPost.ownerId, feedPost.id)
         } else {
-            ApiFactory.vkService
-                .addLike(accessToken, feedPost.ownerId, feedPost.id)
+            vkService.addLike(accessToken, feedPost.ownerId, feedPost.id)
         }
         val likesCount = response.response.likes
         val newStatistics = feedPost.statistics.copy(
@@ -103,14 +104,14 @@ class NewsFeedRepositoryImpl(application: Application): NewsFeedRepository {
 
     override suspend fun ignoreItem(feedPost: FeedPost){
         val accessToken = getAccessToken()
-        ApiFactory.vkService.ignoreItem(accessToken, feedPost.ownerId, feedPost.id)
+        vkService.ignoreItem(accessToken, feedPost.ownerId, feedPost.id)
         _feedPosts.remove(feedPost)
         refreshedListFlow.emit(feedPosts)
     }
 
     override fun getCommentsState(feedPost: FeedPost) = flow {
         val accessToken = getAccessToken()
-        val response = ApiFactory.vkService.getComments(accessToken, feedPost.ownerId, feedPost.id)
+        val response = vkService.getComments(accessToken, feedPost.ownerId, feedPost.id)
         emit(mapper.mapResponseToComments(response))
     }.retry {
         delay(RETRY_TIMEOUT_MILLIS)
