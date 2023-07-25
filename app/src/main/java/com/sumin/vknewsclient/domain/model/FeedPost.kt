@@ -7,7 +7,7 @@ data class FeedPost(
     val publicationDate: String = "14:00",
     val avatarUrl: String,
     val contentText: String = "Lorem Ipsum - это текст-\"рыба\", часто используемый в печати и вэб-дизайне. Lorem Ipsum является стандартной \"рыбой\" для текстов на латинице с начала XVI века.",
-    val contentImageUrl: String?,
+    val contentImages: List<Photo>?,
     val statistics: Statistics
 )
 

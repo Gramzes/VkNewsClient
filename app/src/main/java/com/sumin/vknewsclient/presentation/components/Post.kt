@@ -1,19 +1,15 @@
-package com.sumin.vknewsclient
+package com.sumin.vknewsclient.presentation.components
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.rememberTransformableState
-import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
@@ -23,50 +19,19 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.sumin.vknewsclient.domain.model.Comments
+import com.sumin.vknewsclient.R
 import com.sumin.vknewsclient.domain.model.FeedPost
-import com.sumin.vknewsclient.domain.model.Like
-import com.sumin.vknewsclient.domain.model.Share
 import com.sumin.vknewsclient.domain.model.StatisticItem
 import com.sumin.vknewsclient.domain.model.Statistics
-import com.sumin.vknewsclient.domain.model.Views
 import com.sumin.vknewsclient.ui.theme.LikeRed
-import com.sumin.vknewsclient.ui.theme.VkNewsClientTheme
-
-@Preview(showBackground = true)
-@Composable
-private fun PostPreview(){
-    VkNewsClientTheme() {
-        Post(
-            feedPost = FeedPost(
-                1,
-                1,
-                "Иван Золотов",
-                "17:30",
-                "https://sun37-2.userapi.com/s/v1/ig2/jdPr9p6ja0v5Z-l980KWKt3CFnWIH3NxsSqCv51zxZHJbwY3D47X6ykA9Qquuy_zbAPCStCDtNl9u2b1DFCcsTiM.jpg?size=50x50&quality=95&crop=61,0,1656,1656&ava=1",
-                "Как еще?",
-                null,
-                Statistics(Like(0, false), Share(0), Comments(0), Views(0))
-            ),
-            onLikeClickListener = { _, _ -> },
-            onCommentClickListener = { _, _ -> })
-    }
-}
 
 @Composable
 fun Post(feedPost: FeedPost,
@@ -133,16 +98,12 @@ private fun PostContent(feedPost: FeedPost) {
             text = feedPost.contentText,
             color = MaterialTheme.colors.onPrimary
         )
-        Spacer(modifier = Modifier.height(5.dp))
     }
-    AsyncImage(
-        model = feedPost.contentImageUrl,
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(3.dp)),
-        contentDescription = "",
-        contentScale = ContentScale.FillWidth
-    )
+    val images = feedPost.contentImages
+
+    images?.let {
+        PhotoContent(images = it)
+    }
 }
 
 @Composable
@@ -235,4 +196,3 @@ fun formatStatisticCount(count: Int): String{
         count.toString()
     }
 }
-

@@ -1,10 +1,14 @@
-package com.sumin.vknewsclient.data.repository
+package com.sumin.vknewsclient.data.repository.wall_repositories
 
 import com.sumin.vknewsclient.data.mapper.NewsFeedMapper
+import com.sumin.vknewsclient.data.model.NewsFeedResponseDto
 import com.sumin.vknewsclient.data.network.ApiService
 import com.sumin.vknewsclient.domain.model.FeedPost
 import com.sumin.vknewsclient.domain.model.Like
+import com.sumin.vknewsclient.domain.repository.WallRepository
 import com.sumin.vknewsclient.extensions.mergeWith
+import com.vk.api.sdk.VKPreferencesKeyValueStorage
+import com.vk.api.sdk.auth.VKAccessToken
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -15,14 +19,15 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.retry
 import kotlinx.coroutines.flow.stateIn
 
-class WallRepositoryImpl (
+
+abstract class WallRepositoryImpl constructor(
+    private val storage: VKPreferencesKeyValueStorage,
     private val mapper: NewsFeedMapper,
     private val vkService: ApiService,
-    private val token: String
 ): WallRepository {
 
-    private var isFirstLoading = true
-    private var nextFromKey: String? = null
+    private val token: VKAccessToken?
+        get() = VKAccessToken.restore(storage)
 
     private var _wallPosts = mutableListOf<FeedPost>()
     private val wallPosts: List<FeedPost>
@@ -33,16 +38,12 @@ class WallRepositoryImpl (
 
     private val refreshedListFlow = MutableSharedFlow<List<FeedPost>>()
 
+    abstract suspend fun getNextData(token: String): NewsFeedResponseDto
+
     private val wallState: StateFlow<List<FeedPost>> = flow {
         nextDataIsNeeded.emit(Unit)
         nextDataIsNeeded.collect {
-            if (!isFirstLoading && nextFromKey == null) {
-                emit(wallPosts)
-                return@collect
-            }
-            val response = vkService.loadNewsFeed(token, nextFromKey)
-            nextFromKey = response.response.nextStartKey
-            isFirstLoading = false
+            val response = getNextData(getAccessToken())
             _wallPosts += mapper.mapResponseToPosts(response).toMutableList()
             emit(wallPosts)
         }
@@ -54,15 +55,19 @@ class WallRepositoryImpl (
         .mergeWith(refreshedListFlow)
         .stateIn(coroutineScope, SharingStarted.Lazily, wallPosts)
 
+    private fun getAccessToken(): String{
+        return token?.accessToken ?: throw IllegalStateException("Token is null")
+    }
+
     override suspend fun loadNextData(){
         nextDataIsNeeded.emit(Unit)
     }
 
     override suspend fun changeLikeStatus(feedPost: FeedPost){
         val response = if (feedPost.statistics.likes.isLiked){
-            vkService.deleteLike(token, feedPost.ownerId, feedPost.id)
+            vkService.deleteLike(getAccessToken(), feedPost.ownerId, feedPost.id)
         } else {
-            vkService.addLike(token, feedPost.ownerId, feedPost.id)
+            vkService.addLike(getAccessToken(), feedPost.ownerId, feedPost.id)
         }
         val likesCount = response.response.likes
         val newStatistics = feedPost.statistics.copy(
@@ -77,13 +82,13 @@ class WallRepositoryImpl (
     }
 
     override suspend fun ignoreItem(feedPost: FeedPost){
-        vkService.ignoreItem(token, feedPost.ownerId, feedPost.id)
+        vkService.ignoreItem(getAccessToken(), feedPost.ownerId, feedPost.id)
         _wallPosts.remove(feedPost)
         refreshedListFlow.emit(wallPosts)
     }
 
     override fun getCommentsState(feedPost: FeedPost) = flow {
-        val response = vkService.getComments(token, feedPost.ownerId, feedPost.id)
+        val response = vkService.getComments(getAccessToken(), feedPost.ownerId, feedPost.id)
         emit(mapper.mapResponseToComments(response))
     }.retry {
         delay(RETRY_TIMEOUT_MILLIS)

@@ -30,31 +30,32 @@ class UserMapper @Inject constructor() {
         return response.response.items.map {
             val smallPhoto = it.photoUrl.find {
                 it.size == "s"
-            }!!.url
+            }!!
             val mediumPhoto = it.photoUrl.find {
                 it.size == "x"
-            }!!.url
+            }!!
             var maxPhoto = it.photoUrl.find {
                 it.size == "w"
-            }?.url
+            }
             if (maxPhoto == null){
                 maxPhoto = it.photoUrl.find {
                     it.size == "z"
-                }?.url
+                }
             }
             if (maxPhoto == null){
                 maxPhoto = it.photoUrl.find {
                     it.size == "y"
-                }?.url
+                }
             }
             if (maxPhoto == null){
                 maxPhoto = mediumPhoto
             }
             Photo(
                 id = it.id.toLong(),
-                smallSizeUrl = smallPhoto,
-                mediumSizeUrl = mediumPhoto,
-                maxSizeUrl = maxPhoto
+                photoSizesRatio = smallPhoto.width / smallPhoto.height.toFloat(),
+                smallSizeUrl = smallPhoto.url,
+                mediumSizeUrl = mediumPhoto.url,
+                maxSizeUrl = maxPhoto.url
             )
         }
     }

@@ -23,11 +23,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.sumin.vknewsclient.Post
 import com.sumin.vknewsclient.application.getComponent
 import com.sumin.vknewsclient.domain.model.FeedPost
-import com.sumin.vknewsclient.presentation.ViewModelFactory
-import com.sumin.vknewsclient.presentation.main.MainScreenViewModel
+import com.sumin.vknewsclient.presentation.components.Post
 import com.sumin.vknewsclient.ui.theme.VKBlue
 
 @Composable

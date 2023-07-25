@@ -1,7 +1,8 @@
 package com.sumin.vknewsclient.di
 
 import android.app.Application
-import com.sumin.vknewsclient.domain.model.FeedPost
+import com.sumin.vknewsclient.di.comments.CommentScreenComponent
+import com.sumin.vknewsclient.di.scopes.ApplicationScope
 import com.sumin.vknewsclient.presentation.ViewModelFactory
 import com.sumin.vknewsclient.presentation.main.MainActivity
 import dagger.BindsInstance
@@ -18,6 +19,7 @@ interface AppComponent {
     fun getViewModelFactory(): ViewModelFactory
 
     fun getCommentScreenComponentFactory(): CommentScreenComponent.Factory
+
 
     @Component.Factory
     interface Factory{

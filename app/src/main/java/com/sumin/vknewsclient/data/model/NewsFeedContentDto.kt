@@ -3,6 +3,8 @@ package com.sumin.vknewsclient.data.model
 import com.google.gson.annotations.SerializedName
 
 data class NewsFeedContentDto(
+    @SerializedName("count")
+    val count: Int?,
     @SerializedName("items")
     val posts: List<PostDto>,
     @SerializedName("profiles")

@@ -18,12 +18,12 @@ interface ViewModelModule {
     fun bindMainScreenViewModel(viewModel: MainScreenViewModel): ViewModel
 
     @IntoMap
-    @ViewModelKey(NewsFeedViewModel::class)
-    @Binds
-    fun bindNewsFeedViewModel(viewModel: NewsFeedViewModel): ViewModel
-
-    @IntoMap
     @ViewModelKey(ProfileViewModel::class)
     @Binds
     fun bindProfileViewModel(viewModel: ProfileViewModel): ViewModel
+
+    @IntoMap
+    @ViewModelKey(NewsFeedViewModel::class)
+    @Binds
+    fun bindNewsFeedViewModel(viewModel: NewsFeedViewModel): ViewModel
 }

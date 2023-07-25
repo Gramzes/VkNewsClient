@@ -1,13 +1,12 @@
 package com.sumin.vknewsclient.presentation.newsfeed
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.sumin.vknewsclient.data.repository.NewsFeedRepositoryImpl
+import com.sumin.vknewsclient.di.qualifiers.NewsFeed
 import com.sumin.vknewsclient.domain.model.FeedPost
+import com.sumin.vknewsclient.domain.repository.WallRepository
 import com.sumin.vknewsclient.domain.usecases.ChangeLikeStatusUseCase
-import com.sumin.vknewsclient.domain.usecases.GetNewsFeedUseCase
+import com.sumin.vknewsclient.domain.usecases.GetWallPostsUseCase
 import com.sumin.vknewsclient.domain.usecases.IgnoreItemUseCase
 import com.sumin.vknewsclient.domain.usecases.LoadNextDataUseCase
 import com.sumin.vknewsclient.extensions.mergeWith
@@ -21,14 +20,20 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class NewsFeedViewModel @Inject constructor(
-    private val getNewsFeedUseCase: GetNewsFeedUseCase,
-    private val loadNextDataUseCase: LoadNextDataUseCase,
-    private val changeLikeStatusUseCase: ChangeLikeStatusUseCase,
-    private val ignoreItemUseCase: IgnoreItemUseCase
+    @NewsFeed
+    repository: WallRepository,
+    changeLikeStatusFactory: ChangeLikeStatusUseCase.Factory,
+    getPostsFactory: GetWallPostsUseCase.Factory,
+    loadNextDataFactory: LoadNextDataUseCase.Factory,
+    ignoreItemFactory: IgnoreItemUseCase.Factory
 ): ViewModel() {
 
+    private val getPostsUseCase = getPostsFactory.create(repository)
+    private val loadNextDataUseCase = loadNextDataFactory.create(repository)
+    private val changeLikeStatusUseCase = changeLikeStatusFactory.create(repository)
+    private val ignoreItemUseCase = ignoreItemFactory.create(repository)
 
-    private val newsFeedStateFlow = getNewsFeedUseCase()
+    private val newsFeedStateFlow = getPostsUseCase()
     private val loadNextDataEvents = MutableSharedFlow<Unit>(replay = 1)
     private val loadNextDataFlow = flow {
         loadNextDataEvents.collect{

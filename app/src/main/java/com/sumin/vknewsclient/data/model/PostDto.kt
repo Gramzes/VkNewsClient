@@ -6,7 +6,9 @@ data class PostDto(
     @SerializedName("id")
     val id: Long,
     @SerializedName("source_id")
-    val sourceId: Long,
+    val sourceId: Long?,
+    @SerializedName("owner_id")
+    val ownerId: Long?,
     @SerializedName("date")
     val date: Int,
     @SerializedName("text")

@@ -18,6 +18,14 @@ interface ApiService {
         @Query("start_from") startFrom: String?
     ): NewsFeedResponseDto
 
+    @GET("wall.get?v=5.131&extended=1")
+    suspend fun getWallPosts(
+        @Query("access_token") accessToken: String,
+        @Query("owner_id") ownerId: Long,
+        @Query("count") count: Int,
+        @Query("offset") offset: Int,
+    ): NewsFeedResponseDto
+
     @GET("likes.add?v=5.131&type=post")
     suspend fun addLike(
         @Query("access_token") accessToken: String,
@@ -45,14 +53,6 @@ interface ApiService {
         @Query("owner_id") ownerId: Long,
         @Query("post_id") postId: Long
     ): CommentsResponseDto
-
-    @GET("wall.get?v=5.131&extended=1")
-    suspend fun getWallPosts(
-        @Query("access_token") accessToken: String,
-        @Query("owner_id") ownerId: Long,
-        @Query("count") count: Int,
-        @Query("offset") offset: Int,
-    ): NewsFeedResponseDto
 
     @GET("users.get?v=5.131&fields=bdate,status,career,city,followers_count,online,photo_200_orig,counters")
     suspend fun getUser(

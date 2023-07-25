@@ -6,5 +6,9 @@ data class PhotoUrlDto(
     @SerializedName("url")
     val url: String,
     @SerializedName("type")
-    val size: String
+    val size: String,
+    @SerializedName("width")
+    val width: Int,
+    @SerializedName("height")
+    val height: Int
 )

@@ -1,4 +1,4 @@
-package com.sumin.vknewsclient.di
+package com.sumin.vknewsclient.di.comments
 
 import com.sumin.vknewsclient.domain.model.FeedPost
 import com.sumin.vknewsclient.presentation.ViewModelFactory

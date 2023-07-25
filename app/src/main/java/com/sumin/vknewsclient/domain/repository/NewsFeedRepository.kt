@@ -9,17 +9,7 @@ import kotlinx.coroutines.flow.StateFlow
 
 interface NewsFeedRepository {
 
-    fun getCommentsState(feedPost: FeedPost): StateFlow<List<Comment>>
-
-    fun getNewsFeedState(): StateFlow<List<FeedPost>>
-
     fun getAuthState(): StateFlow<AuthState>
 
-    suspend fun changeLikeStatus(feedPost: FeedPost)
-
-    suspend fun ignoreItem(feedPost: FeedPost)
-
     suspend fun checkAuthResult()
-
-    suspend fun loadNextData()
 }

@@ -9,7 +9,7 @@ class GetProfilePhotosUseCase @Inject constructor(
     private val repository: ProfileRepository
 ) {
 
-    operator fun invoke(): StateFlow<List<Photo>> {
+    operator fun invoke(): StateFlow<List<Photo>?> {
         return repository.getProfilePhotos()
     }
 }

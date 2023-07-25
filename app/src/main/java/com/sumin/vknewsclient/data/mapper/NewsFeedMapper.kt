@@ -1,11 +1,13 @@
 package com.sumin.vknewsclient.data.mapper
 
 import com.sumin.vknewsclient.data.model.NewsFeedResponseDto
+import com.sumin.vknewsclient.data.model.PhotoDto
 import com.sumin.vknewsclient.data.model.comments.CommentsResponseDto
 import com.sumin.vknewsclient.domain.model.Comment
 import com.sumin.vknewsclient.domain.model.Comments
 import com.sumin.vknewsclient.domain.model.FeedPost
 import com.sumin.vknewsclient.domain.model.Like
+import com.sumin.vknewsclient.domain.model.Photo
 import com.sumin.vknewsclient.domain.model.Share
 import com.sumin.vknewsclient.domain.model.Statistics
 import com.sumin.vknewsclient.domain.model.Views
@@ -25,33 +27,36 @@ class NewsFeedMapper @Inject constructor() {
             var communityName: String? = null
             var avatarUrl: String? = null
 
-            if (it.sourceId < 0) {
+            val sourceId = it.sourceId ?: it.ownerId ?: throw IllegalStateException()
+            if (sourceId < 0) {
                 val group = groups.find { group ->
-                    group.id == -it.sourceId
+                    group.id == -sourceId
                 }
                 communityName = group?.name
                 avatarUrl = group?.photo
             } else{
                 val profile = profiles.find { profile ->
-                    profile.id == it.sourceId
+                    profile.id == sourceId
                 }
                 profile?.let {
                     communityName = "${profile.firstName} ${profile.lastName}"
                     avatarUrl = profile.photo
                 }
             }
+            it.attachments?.map { it.photo }
 
-            val photoUrl = it.attachments?.firstOrNull() { it.photo != null }
-                ?.photo?.photoUrl?.lastOrNull()?.url
+            val photos = it.attachments?.mapNotNull {
+                it.photo?.let { it1 -> getPhoto(it1) }
+            }
 
             FeedPost(
                 id = it.id,
-                ownerId = it.sourceId,
+                ownerId = sourceId,
                 communityName = communityName ?: "",
                 publicationDate = mapTimestampToDate(it.date * 1000L),
                 avatarUrl = avatarUrl ?: "",
                 contentText = it.text,
-                contentImageUrl = photoUrl,
+                contentImages = photos,
                 statistics = Statistics(
                     Like(it.likes.count, it.likes.isLiked == 1),
                     Share(it.reposts.count),
@@ -61,6 +66,38 @@ class NewsFeedMapper @Inject constructor() {
             )
         }
         return feedPosts
+    }
+
+    private fun getPhoto(photo: PhotoDto): Photo {
+        val smallPhoto = photo.photoUrl.find {
+            it.size == "s"
+        }!!
+        val mediumPhoto = photo.photoUrl.find {
+            it.size == "x"
+        }!!
+        var maxPhoto = photo.photoUrl.find {
+            it.size == "w"
+        }
+        if (maxPhoto == null){
+            maxPhoto = photo.photoUrl.find {
+                it.size == "z"
+            }
+        }
+        if (maxPhoto == null){
+            maxPhoto = photo.photoUrl.find {
+                it.size == "y"
+            }
+        }
+        if (maxPhoto == null){
+            maxPhoto = mediumPhoto
+        }
+        return Photo(
+            id = photo.id.toLong(),
+            photoSizesRatio = smallPhoto.width / smallPhoto.height.toFloat(),
+            smallSizeUrl = smallPhoto.url,
+            mediumSizeUrl = mediumPhoto.url,
+            maxSizeUrl = maxPhoto.url
+        )
     }
 
     fun mapResponseToComments(response: CommentsResponseDto): List<Comment>{

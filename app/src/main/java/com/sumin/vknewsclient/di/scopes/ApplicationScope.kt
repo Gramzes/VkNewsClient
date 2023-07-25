@@ -1,4 +1,4 @@
-package com.sumin.vknewsclient.di
+package com.sumin.vknewsclient.di.scopes
 
 import javax.inject.Scope
 

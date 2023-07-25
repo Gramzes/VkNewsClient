@@ -28,7 +28,6 @@ import com.sumin.vknewsclient.navigation.rememberNavState
 import com.sumin.vknewsclient.presentation.comments.CommentsScreen
 import com.sumin.vknewsclient.presentation.newsfeed.NewsFeedScreen
 import com.sumin.vknewsclient.presentation.profile.ProfileScreen
-import com.sumin.vknewsclient.presentation.profile.SheetLayout
 
 @Composable
 fun MainScreen() {
