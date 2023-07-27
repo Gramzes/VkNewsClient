@@ -4,17 +4,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sumin.vknewsclient.di.qualifiers.NewsFeed
 import com.sumin.vknewsclient.domain.model.FeedPost
+import com.sumin.vknewsclient.domain.model.Resource
 import com.sumin.vknewsclient.domain.repository.WallRepository
 import com.sumin.vknewsclient.domain.usecases.ChangeLikeStatusUseCase
 import com.sumin.vknewsclient.domain.usecases.GetWallPostsUseCase
 import com.sumin.vknewsclient.domain.usecases.IgnoreItemUseCase
 import com.sumin.vknewsclient.domain.usecases.LoadNextDataUseCase
-import com.sumin.vknewsclient.extensions.mergeWith
 import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -33,26 +31,30 @@ class NewsFeedViewModel @Inject constructor(
     private val changeLikeStatusUseCase = changeLikeStatusFactory.create(repository)
     private val ignoreItemUseCase = ignoreItemFactory.create(repository)
 
+    private var isFirstLoading = true
     private val newsFeedStateFlow = getPostsUseCase()
-    private val loadNextDataEvents = MutableSharedFlow<Unit>(replay = 1)
-    private val loadNextDataFlow = flow {
-        loadNextDataEvents.collect{
-            emit(NewsFeedScreenState.Posts(
-                posts = newsFeedStateFlow.value,
-                isNextLoading = true
-            ))
-        }
-    }
 
     val newsFeedState = newsFeedStateFlow
-        .filter { it.isNotEmpty() }
-        .map { NewsFeedScreenState.Posts(it) as NewsFeedScreenState}
+        .map {
+            when (it){
+                is Resource.Data -> {
+                    NewsFeedScreenState.Posts(it.data)
+                }
+                is Resource.EndOfData -> NewsFeedScreenState.Posts(it.data, endOfData = true)
+                is Resource.Loading -> {
+                    if (isFirstLoading){
+                        NewsFeedScreenState.Loading
+                    } else {
+                        NewsFeedScreenState.Posts(it.data, isNextLoading = true)
+                    }
+                }
+            }
+        }
+        .onEach { isFirstLoading = false }
         .onStart { emit(NewsFeedScreenState.Loading) }
-        .mergeWith(loadNextDataFlow)
 
     fun loadNextNewsFeed(){
         viewModelScope.launch {
-            loadNextDataEvents.emit(Unit)
             loadNextDataUseCase()
         }
     }

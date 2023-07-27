@@ -6,7 +6,7 @@ sealed interface FriendsState {
 
     object Initial: FriendsState
 
-    data class Friends(val friends: List<User>): FriendsState
+    data class Friends(val count: Int, val friends: List<User>): FriendsState
 
     object NoFriends: FriendsState
 }

@@ -49,7 +49,7 @@ fun MainScreenContent(
 ){
     val currentState = state.value
     if (currentState is NewsFeedScreenState.Posts) {
-        val posts = currentState.posts
+        val posts = currentState.postsState
         LazyColumn(
             modifier = Modifier.background(MaterialTheme.colors.secondary),
             contentPadding = PaddingValues(top = 10.dp, bottom = 10.dp),
@@ -83,7 +83,7 @@ fun MainScreenContent(
                             color = VKBlue
                         )
                     }
-                } else{
+                } else if (!currentState.endOfData){
                     SideEffect {
                         viewModel.loadNextNewsFeed()
                     }

@@ -1,32 +1,24 @@
 package com.sumin.vknewsclient.presentation.profile
 
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.sumin.vknewsclient.di.qualifiers.NewsFeed
-import com.sumin.vknewsclient.di.qualifiers.UserProfile
-import com.sumin.vknewsclient.domain.repository.WallRepository
-import com.sumin.vknewsclient.domain.usecases.ChangeLikeStatusUseCase
-import com.sumin.vknewsclient.domain.usecases.GetFriendsForProfileUseCase
-import com.sumin.vknewsclient.domain.usecases.GetPostsCountUseCase
-import com.sumin.vknewsclient.domain.usecases.GetProfileInfoUseCase
-import com.sumin.vknewsclient.domain.usecases.GetProfilePhotosUseCase
-import com.sumin.vknewsclient.domain.usecases.GetWallPostsUseCase
-import com.sumin.vknewsclient.domain.usecases.IgnoreItemUseCase
-import com.sumin.vknewsclient.domain.usecases.LoadNextDataUseCase
+import com.sumin.vknewsclient.domain.model.FeedPost
+import com.sumin.vknewsclient.domain.model.Resource
 import com.sumin.vknewsclient.domain.usecases.ProfileUseCases
 import com.sumin.vknewsclient.presentation.profile.state.FriendsState
 import com.sumin.vknewsclient.presentation.profile.state.PhotosState
 import com.sumin.vknewsclient.presentation.profile.state.PostsState
 import com.sumin.vknewsclient.presentation.profile.state.ProfileScreenState
 import com.sumin.vknewsclient.presentation.profile.state.ProfileState
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -34,25 +26,16 @@ class ProfileViewModel @Inject constructor(
     private val useCases: ProfileUseCases
 ): ViewModel() {
 
-    private val _profileState = mutableStateOf(ProfileScreenState.Initial as ProfileScreenState)
-    val profileState: State<ProfileScreenState> = _profileState
+    private var isFirstLoading = true
+    private val postsStateFlow = useCases.getPostsUseCase()
 
-    private val _postsState = mutableStateOf(PostsState.Initial as PostsState)
-    val postsState: State<PostsState> = _postsState
+    val profileState = loadProfile()
+        .stateIn(viewModelScope, SharingStarted.Lazily, initialValue = ProfileScreenState.Initial)
 
-
-    val postsCountState = useCases.getPostCountUseCase()
-
-    init {
-        viewModelScope.launch {
-            _postsState.value = PostsState.Loading
-
-        }
-    }
-
+    val postsState: StateFlow<PostsState> = loadPosts()
+        .stateIn(viewModelScope, SharingStarted.Lazily, initialValue = PostsState.Initial)
 
     private fun loadProfile(): Flow<ProfileScreenState> {
-        _profileState.value = ProfileScreenState.Loading
         return combine(
             useCases.getProfileInfoUseCase().filterNotNull(),
             useCases.getProfilePhotosUseCase().filterNotNull(),
@@ -66,8 +49,8 @@ class ProfileViewModel @Inject constructor(
                 PhotosState.NoPhotos
             }
 
-            val friendsState = if (friends.isNotEmpty()){
-                FriendsState.Friends(friends)
+            val friendsState = if (friends.isNotEmpty() && user.friendsCount != null){
+                FriendsState.Friends(user.friendsCount, friends)
             } else {
                 FriendsState.NoFriends
             }
@@ -76,14 +59,47 @@ class ProfileViewModel @Inject constructor(
                 profileState,
                 friendsState,
                 photosState
-            )
+            ) as ProfileScreenState
+        }.onStart {
+            emit(ProfileScreenState.Loading)
         }
     }
 
-    private fun loadPosts(){
-        _postsState.value = PostsState.Loading
-        return combine(
-            useCases.getPostsUseCase()
-        )
+    private fun loadPosts() = postsStateFlow
+        .combine(
+            useCases
+            .getPostCountUseCase()
+            .filterNotNull()
+        ){ posts, postsCount ->
+            when (posts){
+                is Resource.Data -> {
+                    PostsState.Posts(postsCount, posts.data)
+                }
+                is Resource.EndOfData -> {
+                    PostsState.Posts(postsCount, posts.data, endOfData = true)
+                }
+                is Resource.Loading -> {
+                    if (isFirstLoading){
+                        PostsState.Loading
+                    } else {
+                        PostsState.Posts(postsCount, posts.data, isNextLoading = true)
+                    }
+                }
+            }
+        }
+        .onEach { isFirstLoading = false }
+        .onStart { emit(PostsState.Loading) }
+
+    fun loadNextPosts(){
+        viewModelScope.launch {
+            useCases.loadNextDataUseCase()
+        }
+    }
+
+    fun changeLikeStatus(feedPost: FeedPost){
+        val changeLikeExceptionHandler = CoroutineExceptionHandler { _, throwable -> }
+        viewModelScope.launch(changeLikeExceptionHandler) {
+            useCases.changeLikeStatusUseCase(feedPost)
+        }
     }
 }

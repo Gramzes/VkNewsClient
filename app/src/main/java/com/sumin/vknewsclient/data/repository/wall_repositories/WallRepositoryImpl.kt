@@ -5,6 +5,7 @@ import com.sumin.vknewsclient.data.model.NewsFeedResponseDto
 import com.sumin.vknewsclient.data.network.ApiService
 import com.sumin.vknewsclient.domain.model.FeedPost
 import com.sumin.vknewsclient.domain.model.Like
+import com.sumin.vknewsclient.domain.model.Resource
 import com.sumin.vknewsclient.domain.repository.WallRepository
 import com.sumin.vknewsclient.extensions.mergeWith
 import com.vk.api.sdk.VKPreferencesKeyValueStorage
@@ -13,10 +14,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.retry
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 
 
@@ -37,23 +40,36 @@ abstract class WallRepositoryImpl constructor(
     private val nextDataIsNeeded = MutableSharedFlow<Unit>(replay = 1)
 
     private val refreshedListFlow = MutableSharedFlow<List<FeedPost>>()
+    private val refreshedStateFlow = flow{
+        refreshedListFlow.collect{
+            val currentState = wallState.first()
+            emit(currentState.copy(it))
+        }
+    }.shareIn(coroutineScope, SharingStarted.Lazily)
 
     abstract suspend fun getNextData(token: String): NewsFeedResponseDto
 
-    private val wallState: StateFlow<List<FeedPost>> = flow {
+    private val wallState: SharedFlow<Resource<List<FeedPost>>> = flow {
         nextDataIsNeeded.emit(Unit)
         nextDataIsNeeded.collect {
+            emit(Resource.Loading(wallPosts))
             val response = getNextData(getAccessToken())
-            _wallPosts += mapper.mapResponseToPosts(response).toMutableList()
-            emit(wallPosts)
+            val newPosts = mapper.mapResponseToPosts(response).toMutableList()
+            _wallPosts += newPosts
+            delay(4000)
+            if (newPosts.isEmpty()){
+                emit(Resource.EndOfData(wallPosts))
+            } else {
+                emit(Resource.Data(wallPosts))
+            }
         }
     }
         .retry{
             delay(RETRY_TIMEOUT_MILLIS)
             true
         }
-        .mergeWith(refreshedListFlow)
-        .stateIn(coroutineScope, SharingStarted.Lazily, wallPosts)
+        .mergeWith(refreshedStateFlow)
+        .shareIn(coroutineScope, SharingStarted.Lazily, replay = 1)
 
     private fun getAccessToken(): String{
         return token?.accessToken ?: throw IllegalStateException("Token is null")

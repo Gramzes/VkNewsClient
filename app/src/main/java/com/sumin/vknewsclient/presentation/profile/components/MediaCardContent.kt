@@ -16,7 +16,6 @@ import androidx.compose.material.Card
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,7 +31,7 @@ import kotlin.math.min
 
 
 @Composable
-fun MediaCardContent(profilePhotosState: State<List<Photo>>) {
+fun MediaCardContent(photos: List<Photo>) {
     Column(
         modifier = Modifier
             .padding(top = 15.dp, start = 15.dp, end = 15.dp)
@@ -67,7 +66,6 @@ fun MediaCardContent(profilePhotosState: State<List<Photo>>) {
             Column(
                 verticalArrangement = Arrangement.spacedBy(1.dp)
             ) {
-                val photos = profilePhotosState.value
                 val rows = ((min(photos.size, 6) - 1) / 3) + 1
                 repeat(rows) { row ->
                     Row(horizontalArrangement = Arrangement.spacedBy(1.dp)) {

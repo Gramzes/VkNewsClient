@@ -11,7 +11,8 @@ sealed interface PostsState {
     data class Posts(
         val allPostsCount: Int,
         val posts: List<FeedPost>,
-        val isNextLoading: Boolean = false
+        val isNextLoading: Boolean = false,
+        val endOfData: Boolean = false
     ): PostsState
 
 }

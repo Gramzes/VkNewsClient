@@ -9,7 +9,8 @@ sealed class NewsFeedScreenState{
     object Loading: NewsFeedScreenState()
 
     data class Posts(
-        val posts: List<FeedPost>,
-        val isNextLoading: Boolean = false
+        val postsState: List<FeedPost>,
+        val isNextLoading: Boolean = false,
+        val endOfData: Boolean = false
     ): NewsFeedScreenState()
 }

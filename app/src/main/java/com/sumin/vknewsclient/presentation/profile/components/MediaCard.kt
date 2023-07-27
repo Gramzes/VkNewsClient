@@ -14,38 +14,43 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.sumin.vknewsclient.domain.model.Photo
+import com.sumin.vknewsclient.presentation.profile.state.PhotosState
 import com.sumin.vknewsclient.ui.theme.VKBlue
 
 @Composable
-fun MediaCard(profilePhotosState: State<List<Photo>>) {
+fun MediaCard(photosState: PhotosState) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(15.dp)
     ) {
 
-        Column() {
-            MediaCardContent(profilePhotosState)
+        when (photosState){
+            PhotosState.Initial -> TODO()
+            PhotosState.NoPhotos -> TODO()
+            is PhotosState.Photos -> {
+                Column() {
+                    MediaCardContent(photosState.photos)
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { }
-                    .padding(15.dp),
-                verticalAlignment = Alignment.Bottom,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Text(text = "Показать всё", color = VKBlue)
-                Icon(
-                    modifier = Modifier.size(17.dp),
-                    imageVector = Icons.Default.KeyboardArrowRight,
-                    contentDescription = null,
-                    tint = VKBlue
-                )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { }
+                            .padding(15.dp),
+                        verticalAlignment = Alignment.Bottom,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Text(text = "Показать всё", color = VKBlue)
+                        Icon(
+                            modifier = Modifier.size(17.dp),
+                            imageVector = Icons.Default.KeyboardArrowRight,
+                            contentDescription = null,
+                            tint = VKBlue
+                        )
+                    }
+                }
             }
         }
     }
